@@ -1,6 +1,11 @@
 <?php
 use Ratchet\MessageComponentInterface;
 use Ratchet\ConnectionInterface;
+use Ratchet\Server\IoServer;
+use React\Socket\Server as ReactServer;
+use React\Socket\SecureServer;
+use Ratchet\Http\HttpServer;
+use Ratchet\WebSocket\WsServer;
 
 require 'vendor/autoload.php';
 
@@ -35,15 +40,21 @@ class VoiceCall implements MessageComponentInterface {
     }
 }
 
-$server = new \Ratchet\Server\IoServer(
-    new \Ratchet\Http\HttpServer(
-        new \Ratchet\WebSocket\WsServer(
+// Create ServerContext with SSL certificate and private key paths
+$context = new \React\Socket\ServerContext([
+    'local_cert' => '/etc/ssl/certs/ssl-cert-snakeoil.pem',
+    'local_pk'   => '/etc/ssl/private/ssl-cert-snakeoil.key',
+]);
+
+$server = new IoServer(
+    new HttpServer(
+        new WsServer(
             new VoiceCall()
         )
     ),
-    8080
+    new SecureServer(new ReactServer('0.0.0.0:3001'), $context)
 );
 
-echo "Server started at ws://localhost:8080\n";
+echo "Server started at wss://singhropar.tech:3001\n";
 
 $server->run();
